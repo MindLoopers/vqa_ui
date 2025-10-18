@@ -114,14 +114,14 @@ const Sidebar = ({
 
         {showAnalyticsMetrics && (
           <div className="p-3 space-y-3">
-            <Card>
+            <Card className="bg-background">
               <CardHeader className="pb-2">
                 <CardTitle className="text-xs font-medium text-muted-foreground">
                   Total Incidents
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-foreground">293</div>
+                <div className="text-2xl font-bold text-primary">293</div>
                 <p className="text-xs text-muted-foreground flex items-center mt-1">
                   <TrendingUp className="w-3 h-3 mr-1 text-green-500" />
                   +12% from 2020-2024
@@ -129,28 +129,28 @@ const Sidebar = ({
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="bg-background">
               <CardHeader className="pb-2">
                 <CardTitle className="text-xs font-medium text-muted-foreground">
                   Acres Burned
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-foreground">40.1M</div>
+                <div className="text-2xl font-bold text-primary">40.1M</div>
                 <p className="text-xs text-muted-foreground">
                   Total area affected
                 </p>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="bg-background">
               <CardHeader className="pb-2">
                 <CardTitle className="text-xs font-medium text-muted-foreground">
                   Avg Severity
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-foreground">6.2/10</div>
+                <div className="text-2xl font-bold text-primary">6.2/10</div>
                 <p className="text-xs text-muted-foreground">
                   Fire intensity index
                 </p>

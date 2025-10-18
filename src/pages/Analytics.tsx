@@ -60,7 +60,7 @@ const paymentData = [
 
 const Analytics = () => {
   return (
-    <div className="flex h-screen bg-[#F9FAFB]">
+    <div className="flex h-screen bg-background">
       <Sidebar showAnalyticsMetrics={true} />
       
       <div className="flex-1 overflow-y-auto">
@@ -86,7 +86,7 @@ const Analytics = () => {
                     <Tooltip 
                       contentStyle={{ 
                         backgroundColor: 'hsl(var(--card))', 
-                        border: '1px solid hsl(var(--border))' 
+                        border: '2px solid hsl(var(--border))' 
                       }} 
                     />
                     <Legend />
@@ -116,7 +116,7 @@ const Analytics = () => {
                     <Tooltip 
                       contentStyle={{ 
                         backgroundColor: 'hsl(var(--card))', 
-                        border: '1px solid hsl(var(--border))' 
+                        border: '2px solid hsl(var(--border))' 
                       }} 
                     />
                     <Legend />
@@ -143,7 +143,7 @@ const Analytics = () => {
                     <Tooltip 
                       contentStyle={{ 
                         backgroundColor: 'hsl(var(--card))', 
-                        border: '1px solid hsl(var(--border))' 
+                        border: '2px solid hsl(var(--border))' 
                       }} 
                     />
                     <Legend />
