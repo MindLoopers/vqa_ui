@@ -120,7 +120,7 @@ const Chat = () => {
         await new Promise((resolve) => setTimeout(resolve, 1000));
 
         // Randomly decide if API fails (20% chance)
-        if (Math.random() > 0.8) {
+        if (Math.random() > 0) {
           throw new Error("API failed");
         }
 
@@ -152,7 +152,7 @@ const Chat = () => {
   };
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-screen bg-white">
       <Sidebar
         chatHistories={chatHistories}
         activeChatId={activeChatId}
@@ -205,8 +205,8 @@ const Chat = () => {
                       <div
                         className={`max-w-[80%] rounded-lg p-4 ${
                           msg.role === "user"
-                            ? "bg-primary text-primary-foreground ml-auto rounded-br-none"
-                            : "bg-muted rounded-bl-none"
+                            ? "bg-[#A7BAF7] text-black ml-auto rounded-br-none"
+                            : "bg-[#F3F4F6] text-black rounded-bl-none"
                         }`}
                       >
                         {msg.attachment && msg.attachment.type === "image" && (

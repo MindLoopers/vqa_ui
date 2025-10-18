@@ -60,7 +60,7 @@ const paymentData = [
 
 const Analytics = () => {
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-screen bg-[#F9FAFB]">
       <Sidebar showAnalyticsMetrics={true} />
       
       <div className="flex-1 overflow-y-auto">
@@ -93,7 +93,7 @@ const Analytics = () => {
                     <Line 
                       type="monotone" 
                       dataKey="incidents" 
-                      stroke="hsl(var(--primary))" 
+                      stroke="#1E40AF" 
                       strokeWidth={2}
                       name="Number of Incidents"
                     />
@@ -120,7 +120,7 @@ const Analytics = () => {
                       }} 
                     />
                     <Legend />
-                    <Bar dataKey="acres" fill="hsl(var(--primary))" name="Acres Burned" />
+                    <Bar dataKey="acres" fill="#1E40AF" name="Acres Burned" />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -150,8 +150,8 @@ const Analytics = () => {
                     <Area 
                       type="monotone" 
                       dataKey="visitors" 
-                      stroke="hsl(var(--primary))" 
-                      fill="hsl(var(--primary) / 0.2)" 
+                      stroke="#1E40AF" 
+                      fill="#1E40AF20" 
                       name="Visitors"
                     />
                   </AreaChart>
@@ -177,7 +177,7 @@ const Analytics = () => {
                       }} 
                     />
                     <Legend />
-                    <Bar dataKey="visitors" fill="hsl(var(--primary))" name="Active Breach" />
+                    <Bar dataKey="visitors" fill="#1E40AF" name="Active Breach" />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>

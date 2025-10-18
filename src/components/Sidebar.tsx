@@ -48,7 +48,7 @@ const Sidebar = ({
         <Button
           variant={isChat ? "default" : "outline"}
           size="sm"
-          className="flex-1"
+          className={`flex-1 ${isChat ? 'bg-[#1E40AF] hover:bg-[#1E40AF]/90 text-white' : ''}`}
           onClick={() => navigate("/")}
         >
           <MessageSquare className="w-4 h-4 mr-2" />
@@ -57,7 +57,7 @@ const Sidebar = ({
         <Button
           variant={isAnalytics ? "default" : "outline"}
           size="sm"
-          className="flex-1"
+          className={`flex-1 ${isAnalytics ? 'bg-[#1E40AF] hover:bg-[#1E40AF]/90 text-white' : ''}`}
           onClick={() => navigate("/analytics")}
         >
           <BarChart3 className="w-4 h-4 mr-2" />
@@ -70,7 +70,7 @@ const Sidebar = ({
           <>
             <div className="p-3">
               <Button
-                className="w-full bg-primary hover:bg-primary/90"
+                className="w-full bg-[#1E40AF] hover:bg-[#1E40AF]/90 text-white"
                 onClick={onNewChat}
               >
                 <Plus className="w-4 h-4 mr-2" />
@@ -91,9 +91,9 @@ const Sidebar = ({
                     onClick={() => onChatSelect?.(chat.id)}
                     className={cn(
                       "w-full text-left px-3 py-2.5 rounded-md text-sm transition-colors",
-                      "hover:bg-accent",
+                      "hover:bg-[#C7D4FD]",
                       activeChatId === chat.id &&
-                        "bg-accent text-accent-foreground"
+                        "bg-[#C7D4FD] text-foreground"
                     )}
                   >
                     <div className="font-medium truncate">
