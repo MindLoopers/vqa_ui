@@ -32,10 +32,10 @@ const Sidebar = ({
 
   return (
     <div className="w-72 bg-card border-r border-border h-screen flex flex-col">
-      <div className="p-4 border-b border-border">
+      <div className="p-4 flex items-center justify-center">
         <button
           onClick={() => navigate("/")}
-          className="text-xl font-semibold text-foreground flex items-center gap-2 hover:opacity-80 transition-opacity w-full"
+          className="text-xl font-semibold text-foreground flex items-center gap-2 hover:opacity-80 transition-opacity"
         >
           <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
             <FlameKindling className="w-5 h-5 text-primary-foreground" />
@@ -44,11 +44,13 @@ const Sidebar = ({
         </button>
       </div>
 
-      <div className="flex gap-2 p-3 border-b border-border">
+      <div className="flex gap-2 p-3 py-0 border-border">
         <Button
           variant={isChat ? "default" : "outline"}
           size="sm"
-          className={`flex-1 ${isChat ? 'bg-[#1E40AF] hover:bg-[#1E40AF]/90 text-white' : ''}`}
+          className={`flex-1 ${
+            isChat ? "bg-[#1E40AF] hover:bg-[#1E40AF]/90 text-white" : ""
+          }`}
           onClick={() => navigate("/")}
         >
           <MessageSquare className="w-4 h-4 mr-2" />
@@ -57,7 +59,9 @@ const Sidebar = ({
         <Button
           variant={isAnalytics ? "default" : "outline"}
           size="sm"
-          className={`flex-1 ${isAnalytics ? 'bg-[#1E40AF] hover:bg-[#1E40AF]/90 text-white' : ''}`}
+          className={`flex-1 ${
+            isAnalytics ? "bg-[#1E40AF] hover:bg-[#1E40AF]/90 text-white" : ""
+          }`}
           onClick={() => navigate("/analytics")}
         >
           <BarChart3 className="w-4 h-4 mr-2" />
@@ -68,7 +72,7 @@ const Sidebar = ({
       <div className="flex-1 overflow-y-auto">
         {isChat && (
           <>
-            <div className="p-3">
+            <div className="p-3 border-b">
               <Button
                 className="w-full bg-[#1E40AF] hover:bg-[#1E40AF]/90 text-white"
                 onClick={onNewChat}
@@ -78,7 +82,7 @@ const Sidebar = ({
               </Button>
             </div>
 
-            <div className="space-y-1 px-2">
+            <div className="space-y-1 px-3 py-2">
               {chatHistories.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-40 text-muted-foreground text-sm">
                   <MessageSquare className="w-12 h-12 mb-2 opacity-20" />
@@ -92,8 +96,7 @@ const Sidebar = ({
                     className={cn(
                       "w-full text-left px-3 py-2.5 rounded-md text-sm transition-colors",
                       "hover:bg-[#C7D4FD]",
-                      activeChatId === chat.id &&
-                        "bg-[#C7D4FD] text-foreground"
+                      activeChatId === chat.id && "bg-[#C7D4FD] text-foreground"
                     )}
                   >
                     <div className="font-medium truncate">
@@ -161,8 +164,8 @@ const Sidebar = ({
       </div>
 
       <div className="p-4 border-t border-border text-xs text-muted-foreground">
-        <div>Wildfire Reasoning System</div>
-        <div>© 2025 Wildfire VQA. All rights reserved.</div>
+        <div>WildFire Reasoning System</div>
+        <div>© 2025 WildFire Reasoning System. All rights reserved.</div>
       </div>
     </div>
   );

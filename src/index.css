@@ -71,3 +71,19 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
   }
 }
+
+/* Remove gray hover effect from SVG charts */
+.recharts-wrapper .recharts-tooltip-cursor {
+  fill: transparent !important;
+}
+
+/* Make sure the hover dots on line charts remain visible */
+.recharts-wrapper .recharts-line .recharts-active-dot {
+  fill: #1E40AF !important;
+}
+
+/* Custom animation utilities */
+.animation-delay-500 {
+  animation-delay: 500ms;
+  animation-direction: reverse;
+}

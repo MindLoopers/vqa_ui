@@ -1,9 +1,10 @@
-import { useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { FlameKindling, Paperclip, Send } from "lucide-react";
+import { FlameKindling, Paperclip, Send, X } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import { globalState, ChatMessage } from "@/lib/globalState";
+import { sendMultimodalQuery } from "@/lib/api";
 
 const Chat = () => {
   const [chatHistories, setChatHistories] = useState(
@@ -12,23 +13,47 @@ const Chat = () => {
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [attachment, setAttachment] = useState<{
-    type: "image" | "video";
-    file: File;
-    previewUrl: string;
-  } | null>(null);
+  const [attachments, setAttachments] = useState<
+    {
+      type: "image";
+      file: File;
+      previewUrl: string;
+    }[]
+  >([]);
+
+  // Cleanup function for object URLs when component unmounts
+  useEffect(() => {
+    return () => {
+      // Cleanup any object URLs when component unmounts
+      attachments.forEach((attachment) => {
+        URL.revokeObjectURL(attachment.previewUrl);
+      });
+    };
+  }, [attachments]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleNewChat = () => {
-    const newChat = {
-      id: Date.now().toString(),
-      title: "New chat",
-      date: new Date().toLocaleDateString(),
-      messages: [],
-    };
-    globalState.addChatHistory(newChat);
-    setChatHistories(globalState.getChatHistories());
-    setActiveChatId(newChat.id);
+    // Check if we already have an empty chat
+    const existingEmptyChat = chatHistories.find(
+      (chat) => chat.messages.length === 0
+    );
+
+    if (existingEmptyChat) {
+      // If an empty chat exists, just activate it instead of creating a new one
+      setActiveChatId(existingEmptyChat.id);
+      globalState.setActiveChatId(existingEmptyChat.id);
+    } else {
+      // Otherwise create a new chat
+      const newChat = {
+        id: Date.now().toString(),
+        title: "New chat",
+        date: new Date().toLocaleDateString(),
+        messages: [],
+      };
+      globalState.addChatHistory(newChat);
+      setChatHistories(globalState.getChatHistories());
+      setActiveChatId(newChat.id);
+    }
   };
 
   const handleChatSelect = (id: string) => {
@@ -43,92 +68,120 @@ const Chat = () => {
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
-    // Check if file is an image or video
-    const isImage = file.type.startsWith("image/");
-    const isVideo = file.type.startsWith("video/");
-
-    if (!isImage && !isVideo) {
-      alert("Only image and video files are allowed");
+    // Check if adding these files would exceed the limit of 5
+    if (attachments.length + files.length > 5) {
+      alert("Maximum 5 images allowed");
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
       return;
     }
 
-    const fileType = isImage ? "image" : "video";
-    const previewUrl = URL.createObjectURL(file);
-    setAttachment({
-      type: fileType,
-      file,
-      previewUrl,
-    });
-  };
+    // Process each file
+    const newAttachments = [...attachments];
 
-  const clearAttachment = () => {
-    if (attachment?.previewUrl) {
-      URL.revokeObjectURL(attachment.previewUrl);
-    }
-    setAttachment(null);
+    Array.from(files).forEach((file) => {
+      // Check if file is an image
+      const isImage = file.type.startsWith("image/");
+
+      if (!isImage) {
+        alert("Only image files are allowed");
+        return;
+      }
+
+      const previewUrl = URL.createObjectURL(file);
+      newAttachments.push({
+        type: "image",
+        file,
+        previewUrl,
+      });
+    });
+
+    setAttachments(newAttachments);
+
+    // Reset file input
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
   };
 
-  const handleSendMessage = async () => {
-    if ((!message.trim() && !attachment) || !activeChatId) return;
+  const clearAttachments = () => {
+    // Don't revoke URLs as they're needed for display in the chat
+    // We'll handle cleanup when the component unmounts instead
 
-    // Create user message
+    setAttachments([]);
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const removeAttachment = (index: number) => {
+    const newAttachments = [...attachments];
+
+    // Revoke the object URL to prevent memory leaks
+    URL.revokeObjectURL(newAttachments[index].previewUrl);
+
+    // Remove the attachment
+    newAttachments.splice(index, 1);
+    setAttachments(newAttachments);
+  };
+
+  const handleSendMessage = async () => {
+    if ((!message.trim() && attachments.length === 0) || !activeChatId) return;
+
+    // Create user message with proper image URLs
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
       role: "user",
       content: message,
       timestamp: new Date(),
+      attachments: attachments.map((attachment) => {
+        // Create a persistent copy of the image URL
+        const persistentUrl = attachment.previewUrl;
+        console.log("Adding attachment with URL:", persistentUrl);
+        return {
+          type: attachment.type,
+          url: persistentUrl,
+          name: attachment.file.name,
+        };
+      }),
     };
-
-    // Add attachment if exists
-    if (attachment) {
-      userMessage.attachment = {
-        type: attachment.type,
-        url: attachment.previewUrl,
-        name: attachment.file.name,
-      };
-    }
 
     // Add user message to chat
     const currentChat = globalState.getChatById(activeChatId);
     if (currentChat) {
       currentChat.messages.push(userMessage);
-      
+
       // Update chat title with first few words if this is the first message
       if (currentChat.messages.length === 1 && message.trim()) {
-        const firstWords = message.trim().split(' ').slice(0, 5).join(' ');
-        const truncatedTitle = firstWords.length < message.trim().length ? `${firstWords}...` : firstWords;
+        const firstWords = message.trim().split(" ").slice(0, 5).join(" ");
+        const truncatedTitle =
+          firstWords.length < message.trim().length
+            ? `${firstWords}...`
+            : firstWords;
         currentChat.title = truncatedTitle;
       }
-      
+
       setMessage("");
-      clearAttachment();
+      const imageFiles = attachments.map((a) => a.file);
+      clearAttachments();
       setChatHistories([...globalState.getChatHistories()]);
 
-      // Mock API call
+      // Call the API
       setLoading(true);
       try {
-        // Simulate API delay
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-
-        // Randomly decide if API fails (20% chance)
-        if (Math.random() > 0) {
-          throw new Error("API failed");
-        }
+        // Call the multimodal API
+        const response = await sendMultimodalQuery(message, imageFiles);
 
         // Create assistant response
         const assistantMessage: ChatMessage = {
           id: (Date.now() + 1).toString(),
           role: "assistant",
-          content: `Based on the image analysis, this appears to be a high-severity wildfire with extensive smoke coverage and visible flames. The fire intensity suggests active burning with significant heat output.`,
+          content: response.response || "No response content",
           timestamp: new Date(),
         };
 
@@ -160,7 +213,7 @@ const Chat = () => {
         onNewChat={handleNewChat}
       />
 
-      <div className="flex-1 flex flex-col items-center justify-center p-8">
+      <div className="flex-1 flex flex-col items-center justify-center py-4">
         {!activeChatId ? (
           <div className="text-center max-w-2xl">
             <div className="mb-6 flex justify-center">
@@ -169,7 +222,7 @@ const Chat = () => {
               </div>
             </div>
             <h2 className="text-3xl font-bold mb-4 text-foreground">
-              Welcome to Wildfire VQA
+              Welcome to WildFire Reasoning System
             </h2>
             <p className="text-muted-foreground mb-8 text-lg">
               Advanced Visual Question Answering system for wildfire monitoring,
@@ -185,13 +238,13 @@ const Chat = () => {
             </Button>
           </div>
         ) : (
-          <div className="w-full max-w-4xl flex flex-col h-full">
+          <div className="w-full flex flex-col h-full">
             <div className="flex items-center justify-between p-4 border-b border-border">
-              <h2 className="text-lg font-semibold text-foreground">
+              <h2 className="text-lg font-semibold text-foreground pl-40">
                 {chatHistories.find((c) => c.id === activeChatId)?.title}
               </h2>
             </div>
-            <div className="flex-1 overflow-y-auto px-0 py-6">
+            <div className="flex-1 overflow-y-auto px-40 py-6">
               <div className="space-y-4">
                 {chatHistories
                   .find((c) => c.id === activeChatId)
@@ -209,22 +262,36 @@ const Chat = () => {
                             : "bg-[#F3F4F6] text-black rounded-bl-none"
                         }`}
                       >
-                        {msg.attachment && msg.attachment.type === "image" && (
-                          <div className="mb-2">
-                            <img
-                              src={msg.attachment.url}
-                              alt={msg.attachment.name}
-                              className="max-w-full rounded-md"
-                            />
-                          </div>
-                        )}
-                        {msg.attachment && msg.attachment.type === "video" && (
-                          <div className="mb-2">
-                            <video
-                              src={msg.attachment.url}
-                              controls
-                              className="max-w-full rounded-md"
-                            />
+                        {msg.attachments && msg.attachments.length > 0 && (
+                          <div
+                            className={`mb-2 grid ${
+                              msg.attachments.length > 1
+                                ? "grid-cols-2"
+                                : "grid-cols-1"
+                            } gap-2 max-w-[300px]`}
+                          >
+                            {msg.attachments.map((attachment, index) => (
+                              <div
+                                key={index}
+                                className="border border-gray-200 rounded-md overflow-hidden"
+                              >
+                                {attachment.type === "image" && (
+                                  <img
+                                    src={attachment.url}
+                                    alt={attachment.name || "Image attachment"}
+                                    className="w-full max-h-[200px] object-contain rounded-md"
+                                    style={{ maxWidth: "100%", height: "auto" }}
+                                    onError={(e) => {
+                                      console.error(
+                                        "Image failed to load:",
+                                        attachment.url
+                                      );
+                                      e.currentTarget.src = "/placeholder.svg";
+                                    }}
+                                  />
+                                )}
+                              </div>
+                            ))}
                           </div>
                         )}
                         {msg.content}
@@ -240,10 +307,17 @@ const Chat = () => {
                 {loading && (
                   <div className="flex justify-start">
                     <div className="max-w-[80%] rounded-lg p-4 bg-muted rounded-bl-none">
-                      <div className="flex space-x-2">
-                        <div className="w-2 h-2 rounded-full bg-foreground/30 animate-bounce"></div>
-                        <div className="w-2 h-2 rounded-full bg-foreground/30 animate-bounce delay-75"></div>
-                        <div className="w-2 h-2 rounded-full bg-foreground/30 animate-bounce delay-150"></div>
+                      <div className="flex items-center space-x-3">
+                        <div className="relative w-10 h-10">
+                          <div className="absolute inset-0 rounded-full border-t-2 border-r-2 border-primary animate-spin"></div>
+                          <div className="absolute inset-1 rounded-full border-b-2 border-l-2 border-accent animate-spin animation-delay-500"></div>
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></div>
+                          </div>
+                        </div>
+                        <div className="text-sm text-foreground/70 font-medium">
+                          Processing your request...
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -255,50 +329,56 @@ const Chat = () => {
               type="file"
               ref={fileInputRef}
               className="hidden"
-              accept="image/jpeg,image/png,image/gif,image/webp,video/mp4,video/webm"
+              accept="image/jpeg,image/png,image/gif,image/webp"
               onChange={handleFileChange}
+              multiple
             />
-            {/* Attachment preview */}
-            {attachment && (
+            {/* Attachments preview */}
+            {attachments.length > 0 && (
               <div className="border-t border-border p-2 bg-muted">
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 flex items-center gap-2">
-                    {attachment.type === "image" ? (
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-sm font-medium">
+                    Attached Images ({attachments.length}/5)
+                  </span>
+                  <Button variant="ghost" size="sm" onClick={clearAttachments}>
+                    Clear All
+                  </Button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {attachments.map((attachment, index) => (
+                    <div key={index} className="relative">
                       <img
                         src={attachment.previewUrl}
-                        alt="Preview"
-                        className="h-10 w-10 object-cover rounded"
+                        alt={`Preview ${index + 1}`}
+                        className="h-16 w-16 object-cover rounded"
                       />
-                    ) : (
-                      <video
-                        src={attachment.previewUrl}
-                        className="h-10 w-10 object-cover rounded"
-                      />
-                    )}
-                    <span className="text-sm truncate">
-                      {attachment.file.name}
-                    </span>
-                  </div>
-                  <Button variant="ghost" size="sm" onClick={clearAttachment}>
-                    ×
-                  </Button>
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0"
+                        onClick={() => removeAttachment(index)}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
-            <div className="border-t border-border p-4 bg-card">
+            <div className="border-t border-border py-6 px-40 bg-card">
               <div className="relative flex items-center">
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="absolute left-2 h-8 w-8 z-10"
+                  className="absolute left-2 h-10 w-10 z-10"
                   onClick={handleAttachFile}
                 >
-                  <Paperclip className="w-4 h-4" />
+                  <Paperclip className="w-6 h-6" />
                 </Button>
                 <Input
                   type="text"
                   placeholder="Ask about wildfire analysis..."
-                  className="flex-1 pl-12 pr-12"
+                  className="flex-1 pl-12 pr-12 h-16"
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   onKeyDown={(e) => {
@@ -310,9 +390,11 @@ const Chat = () => {
                 />
                 <Button
                   size="icon"
-                  className="absolute right-2 bg-primary hover:bg-primary/90 h-8 w-8"
+                  className="absolute right-2 bg-primary hover:bg-primary/90 h-10 w-10"
                   onClick={handleSendMessage}
-                  disabled={loading || (!message.trim() && !attachment)}
+                  disabled={
+                    loading || (!message.trim() && attachments.length === 0)
+                  }
                 >
                   <Send className="w-4 h-4" />
                 </Button>
