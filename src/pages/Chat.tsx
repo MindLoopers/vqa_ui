@@ -4,6 +4,8 @@ import { FlameKindling, Paperclip, Send, X } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import { globalState, ChatMessage } from "@/lib/globalState";
 import { sendMultimodalQuery } from "@/lib/api";
+import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 const Chat = () => {
   const [chatHistories, setChatHistories] = useState(
@@ -329,7 +331,17 @@ const Chat = () => {
                             ))}
                           </div>
                         )}
-                        {msg.content}
+                        <div className="text-lg">
+                          {msg.role === "user" ? (
+                          msg.content
+                        ) : (
+                          <div >
+                            <Markdown remarkPlugins={[remarkGfm]}>
+                              {msg.content}
+                            </Markdown>
+                          </div>
+                        )}
+                        </div>
                         <div className="text-xs mt-1 opacity-70">
                           {new Date(msg.timestamp).toLocaleTimeString([], {
                             hour: "2-digit",
@@ -351,7 +363,7 @@ const Chat = () => {
                           </div>
                         </div>
                         <div className="text-sm text-foreground/70 font-medium">
-                          Processing your request...
+                          Thinking...
                         </div>
                       </div>
                     </div>
