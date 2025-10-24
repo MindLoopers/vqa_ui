@@ -115,16 +115,16 @@ const Sidebar = ({
         )}
 
         {showAnalyticsMetrics && (
-          <div className="p-3 space-y-3">
+          <div className="p-3 space-y-3 ">
             <Card className="bg-background">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-xs font-medium text-muted-foreground">
+              <CardHeader className="pb-2 py-2 text-center">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
                   Total Incidents
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pb-4 text-center">
                 <div className="text-2xl font-bold text-primary">293</div>
-                <p className="text-xs text-muted-foreground flex items-center mt-1">
+                <p className="text-xs text-muted-foreground flex items-center justify-center mt-1">
                   <TrendingUp className="w-3 h-3 mr-1 text-green-500" />
                   +12% from 2020-2024
                 </p>
@@ -132,12 +132,12 @@ const Sidebar = ({
             </Card>
 
             <Card className="bg-background">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-xs font-medium text-muted-foreground">
+              <CardHeader className="pb-2 py-2 text-center">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
                   Acres Burned
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pb-4 text-center">
                 <div className="text-2xl font-bold text-primary">40.1M</div>
                 <p className="text-xs text-muted-foreground">
                   Total area affected
@@ -146,12 +146,12 @@ const Sidebar = ({
             </Card>
 
             <Card className="bg-background">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-xs font-medium text-muted-foreground">
+              <CardHeader className="pb-2 py-2 text-center">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
                   Avg Severity
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pb-4 text-center">
                 <div className="text-2xl font-bold text-primary">6.2/10</div>
                 <p className="text-xs text-muted-foreground">
                   Fire intensity index
