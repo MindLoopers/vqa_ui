@@ -24,7 +24,8 @@ const Chat = () => {
   // Scroll to bottom whenever messages change
   useEffect(() => {
     if (chatContainerRef.current && activeChatId) {
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+      chatContainerRef.current.scrollTop =
+        chatContainerRef.current.scrollHeight;
     }
   }, [chatHistories, activeChatId]);
 
@@ -233,7 +234,7 @@ const Chat = () => {
         onNewChat={handleNewChat}
       />
 
-      <div className="flex-1 flex flex-col items-center justify-center py-4">
+      <div className="flex-1 flex flex-col items-center justify-center pt-4">
         {!activeChatId ? (
           <div className="text-center max-w-2xl">
             <div className="mb-6 flex justify-center">
@@ -265,8 +266,14 @@ const Chat = () => {
               </h2>
             </div>
             <div
-              className="flex-1 overflow-y-auto px-40 py-6"
+              className="flex-1 overflow-y-auto"
               ref={chatContainerRef}
+              style={{
+                paddingLeft: "10rem",
+                paddingRight: "10rem",
+                paddingTop: "1.5rem",
+                paddingBottom: "1.5rem",
+              }}
             >
               <div className="space-y-4">
                 {chatHistories
@@ -393,7 +400,15 @@ const Chat = () => {
                 </div>
               </div>
             )}
-            <div className="border-t border-border py-6 px-40 bg-card">
+            <div
+              className="border-t border-border  bg-card"
+              style={{
+                paddingLeft: "10rem",
+                paddingRight: "10rem",
+                paddingTop: "1.5rem",
+                paddingBottom: "1.5rem",
+              }}
+            >
               <div className="relative flex items-center">
                 <Button
                   variant="ghost"
