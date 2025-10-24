@@ -100,7 +100,6 @@ const Sidebar = ({
                     )}
                   >
                     <div className="font-medium truncate">
-                      {index + 1}.{" "}
                       {chat.title.startsWith("New Chat")
                         ? "New chat"
                         : chat.title}

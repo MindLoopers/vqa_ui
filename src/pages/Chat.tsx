@@ -1,6 +1,5 @@
-import { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { FlameKindling, Paperclip, Send, X } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import { globalState, ChatMessage } from "@/lib/globalState";
@@ -20,6 +19,14 @@ const Chat = () => {
       previewUrl: string;
     }[]
   >([]);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+
+  // Scroll to bottom whenever messages change
+  useEffect(() => {
+    if (chatContainerRef.current && activeChatId) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  }, [chatHistories, activeChatId]);
 
   // Cleanup function for object URLs when component unmounts
   useEffect(() => {
@@ -158,11 +165,17 @@ const Chat = () => {
 
       // Update chat title with first few words if this is the first message
       if (currentChat.messages.length === 1 && message.trim()) {
+        // Split by spaces and get first 5 words
         const firstWords = message.trim().split(" ").slice(0, 5).join(" ");
-        const truncatedTitle =
-          firstWords.length < message.trim().length
-            ? `${firstWords}...`
-            : firstWords;
+
+        // Ensure title isn't too long (max 25 characters)
+        let truncatedTitle = firstWords;
+        if (truncatedTitle.length > 50) {
+          truncatedTitle = truncatedTitle.substring(0, 22) + "...";
+        } else if (firstWords.length < message.trim().length) {
+          truncatedTitle = `${firstWords}...`;
+        }
+
         currentChat.title = truncatedTitle;
       }
 
@@ -200,12 +213,19 @@ const Chat = () => {
         setChatHistories([...globalState.getChatHistories()]);
       } finally {
         setLoading(false);
+        // Scroll to bottom after message is sent with a longer delay to ensure content is rendered
+        setTimeout(() => {
+          if (chatContainerRef.current) {
+            chatContainerRef.current.scrollTop =
+              chatContainerRef.current.scrollHeight;
+          }
+        }, 300);
       }
     }
   };
 
   return (
-    <div className="flex h-screen bg-white">
+    <div className="flex h-screen bg-white overflow-x-hidden">
       <Sidebar
         chatHistories={chatHistories}
         activeChatId={activeChatId}
@@ -244,7 +264,10 @@ const Chat = () => {
                 {chatHistories.find((c) => c.id === activeChatId)?.title}
               </h2>
             </div>
-            <div className="flex-1 overflow-y-auto px-40 py-6">
+            <div
+              className="flex-1 overflow-y-auto px-40 py-6"
+              ref={chatContainerRef}
+            >
               <div className="space-y-4">
                 {chatHistories
                   .find((c) => c.id === activeChatId)
@@ -256,11 +279,16 @@ const Chat = () => {
                       }`}
                     >
                       <div
-                        className={`max-w-[80%] rounded-lg p-4 ${
+                        className={`max-w-[80%] rounded-lg p-4 text-medium break-words whitespace-normal overflow-wrap-break-word ${
                           msg.role === "user"
                             ? "bg-[#A7BAF7] text-black ml-auto rounded-br-none"
                             : "bg-[#F3F4F6] text-black rounded-bl-none"
                         }`}
+                        style={{
+                          overflowWrap: "break-word",
+                          wordWrap: "break-word",
+                          hyphens: "auto",
+                        }}
                       >
                         {msg.attachments && msg.attachments.length > 0 && (
                           <div
@@ -375,10 +403,9 @@ const Chat = () => {
                 >
                   <Paperclip className="w-6 h-6" />
                 </Button>
-                <Input
-                  type="text"
+                <textarea
                   placeholder="Ask about wildfire analysis..."
-                  className="flex-1 pl-12 pr-12 h-16"
+                  className="flex-1 pl-14 pr-14 h-14 text-lg w-full resize-none border rounded-md py-4 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent "
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   onKeyDown={(e) => {
@@ -386,6 +413,11 @@ const Chat = () => {
                       e.preventDefault();
                       handleSendMessage();
                     }
+                  }}
+                  style={{
+                    minHeight: "64px",
+                    maxHeight: "120px",
+                    overflow: "hidden",
                   }}
                 />
                 <Button
