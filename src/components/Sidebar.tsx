@@ -4,6 +4,7 @@ import {
   Plus,
   FlameKindling,
   TrendingUp,
+  LogOut,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,6 +30,12 @@ const Sidebar = ({
   const location = useLocation();
   const isChat = location.pathname === "/";
   const isAnalytics = location.pathname === "/analytics";
+
+  const handleLogout = () => {
+    localStorage.removeItem("isAuthenticated");
+    localStorage.removeItem("user");
+    navigate("/login");
+  };
 
   return (
     <div className="w-72 bg-card border-r border-border h-screen flex flex-col">
@@ -162,9 +169,22 @@ const Sidebar = ({
         )}
       </div>
 
-      <div className="p-4 border-t border-border text-xs text-muted-foreground">
-        <div>WildFire Reasoning System</div>
-        <div>© 2025 WildFire Reasoning System. All rights reserved.</div>
+      <div className="border-t border-border">
+        <div className="p-3">
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
+            onClick={handleLogout}
+          >
+            <LogOut className="w-4 h-4 mr-2" />
+            Logout
+          </Button>
+        </div>
+        <div className="px-4 pb-4 text-xs text-muted-foreground">
+          <div>WildFire Reasoning System</div>
+          <div>© 2025 WildFire Reasoning System. All rights reserved.</div>
+        </div>
       </div>
     </div>
   );

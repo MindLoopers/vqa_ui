@@ -240,8 +240,8 @@ const Chat = () => {
         {!activeChatId ? (
           <div className="text-center max-w-2xl">
             <div className="mb-6 flex justify-center">
-              <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
-                <FlameKindling className="w-10 h-10 text-primary" />
+              <div className="w-20 h-20 rounded-full bg-primary flex items-center justify-center">
+                <FlameKindling className="w-10 h-10 text-primary-foreground" strokeWidth={2} />
               </div>
             </div>
             <h2 className="text-3xl font-bold mb-4 text-foreground">
