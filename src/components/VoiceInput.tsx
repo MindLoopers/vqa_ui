@@ -126,8 +126,8 @@ const VoiceInput: React.FC<VoiceInputProps> = ({ onTranscript, disabled }) => {
       variant="ghost"
       size="icon"
       className={`relative h-10 w-10 z-10 transition-all duration-300 ${
-        isActive ? "text-destructive" : "text-foreground"
-      }`}
+        isActive ? "text-primary" : "text-foreground"
+      } hover:text-primary hover:bg-primary/10`}
       onClick={toggleRecording}
       disabled={disabled || isTranscribing}
       title={
@@ -141,8 +141,8 @@ const VoiceInput: React.FC<VoiceInputProps> = ({ onTranscript, disabled }) => {
       {/* Animated pulse rings when recording */}
       {isRecording && (
         <>
-          <span className="absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75 animate-ping"></span>
-          <span className="absolute inline-flex h-full w-full rounded-full bg-destructive opacity-50 animate-pulse"></span>
+          <span className="absolute inline-flex h-full w-full rounded-full bg-primary opacity-75 animate-ping"></span>
+          <span className="absolute inline-flex h-full w-full rounded-full bg-primary opacity-50 animate-pulse"></span>
         </>
       )}
 
@@ -160,8 +160,8 @@ const VoiceInput: React.FC<VoiceInputProps> = ({ onTranscript, disabled }) => {
       {/* Recording indicator dot */}
       {isRecording && (
         <span className="absolute -top-1 -right-1 flex h-3 w-3">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75"></span>
-          <span className="relative inline-flex rounded-full h-30 w-3 bg-destructive"></span>
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
         </span>
       )}
     </Button>
