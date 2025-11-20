@@ -5,11 +5,11 @@ export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
-  attachment?: {
-    type: 'image' | 'video';
+  attachments?: Array<{
+    type: 'image';
     url: string;
     name: string;
-  };
+  }>;
 }
 
 export interface ChatHistory {
