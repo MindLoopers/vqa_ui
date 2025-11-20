@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from "react";
-import { Mic, MicOff } from "lucide-react";
+import React, { useState, useRef } from "react";
+import { Mic, MicOff, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AssemblyAI } from "assemblyai";
 
 interface VoiceInputProps {
   onTranscript: (text: string) => void;
@@ -8,169 +9,159 @@ interface VoiceInputProps {
 }
 
 const VoiceInput: React.FC<VoiceInputProps> = ({ onTranscript, disabled }) => {
-  const [isListening, setIsListening] = useState(false);
-  const [isSupported, setIsSupported] = useState(false);
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
 
-  useEffect(() => {
-    // Check if browser supports Speech Recognition
-    const SpeechRecognition =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+  // Get API key from environment variable
+  const API_KEY = import.meta.env.VITE_ASSEMBLYAI_API_KEY;
 
-    if (!SpeechRecognition) {
-      setIsSupported(false);
-      console.warn("Speech Recognition API is not supported in this browser");
-      console.log("Browser:", navigator.userAgent);
-      return;
-    }
+  const startRecording = async () => {
+    try {
+      // Request microphone access
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
 
-    setIsSupported(true);
-    console.log("Speech Recognition API is supported");
-    console.log("Protocol:", window.location.protocol);
-    console.log("Host:", window.location.host);
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
 
-    // Initialize Speech Recognition
-    const recognition = new SpeechRecognition();
-    recognition.continuous = false;
-    recognition.interimResults = false;
-    recognition.lang = "en-US";
-    recognition.maxAlternatives = 1;
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: "audio/wav" });
+        console.log("Recording stopped, audio size:", audioBlob.size);
+        
+        // Stop all tracks
+        stream.getTracks().forEach((track) => track.stop());
+        
+        // Transcribe the audio
+        await transcribeAudio(audioBlob);
+      };
 
-    console.log("Speech Recognition initialized with lang:", recognition.lang);
-
-    // Event handlers
-    recognition.onstart = () => {
-      setIsListening(true);
-      console.log("Voice recognition started");
-    };
-
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
-      const transcript = event.results[0][0].transcript;
-      console.log("Transcript:", transcript);
-      onTranscript(transcript);
-    };
-
-    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-      console.error("Speech recognition error:", event.error);
-      console.error("Error details:", event);
-      setIsListening(false);
-
-      // Handle specific errors
-      if (event.error === "not-allowed" || event.error === "service-not-allowed") {
-        alert("Microphone access denied. Please allow microphone access to use voice input.");
-      } else if (event.error === "no-speech") {
-        console.log("No speech detected");
-        // Don't alert for no-speech, just log it
-      } else if (event.error === "audio-capture") {
-        alert("No microphone was found. Please connect a microphone.");
-      } else if (event.error === "network") {
-        console.error("Network error - This might be due to:");
-        console.error("1. Browser trying to connect to Google's speech servers");
-        console.error("2. Firewall/antivirus blocking the connection");
-        console.error("3. Internet connection issues");
-        alert(
-          "Network error: Cannot connect to speech recognition service.\n\n" +
-          "This happens because Web Speech API needs to connect to cloud servers.\n\n" +
-          "Try:\n" +
-          "• Use Chrome or Edge (better localhost support)\n" +
-          "• Check browser console (F12) for more details\n" +
-          "• Check if firewall/antivirus is blocking connections"
-        );
-      }
-    };
-
-    recognition.onend = () => {
-      setIsListening(false);
-      console.log("Voice recognition ended");
-    };
-
-    recognitionRef.current = recognition;
-
-    // Cleanup
-    return () => {
-      if (recognitionRef.current) {
-        recognitionRef.current.abort();
-      }
-    };
-  }, [onTranscript]);
-
-  const toggleListening = () => {
-    if (!isSupported) {
-      // Detect if Firefox
-      const isFirefox = navigator.userAgent.toLowerCase().indexOf('firefox') > -1;
-      
-      if (isFirefox) {
-        alert(
-          "Firefox requires enabling Web Speech API manually:\n\n" +
-          "1. Type 'about:config' in the address bar\n" +
-          "2. Accept the warning\n" +
-          "3. Search for 'media.webspeech.recognition.enable'\n" +
-          "4. Set it to 'true'\n" +
-          "5. Reload this page\n\n" +
-          "Alternatively, use Chrome or Edge for instant voice input."
-        );
-      } else {
-        alert("Speech Recognition is not supported in your browser. Please use Chrome, Edge, or Safari.");
-      }
-      return;
-    }
-
-    if (!recognitionRef.current) return;
-
-    if (isListening) {
-      // Stop listening
-      recognitionRef.current.stop();
-    } else {
-      // Start listening
-      try {
-        recognitionRef.current.start();
-      } catch (error) {
-        console.error("Error starting speech recognition:", error);
-        setIsListening(false);
-        alert("Failed to start voice recognition. Please check your microphone permissions.");
-      }
+      mediaRecorder.start();
+      setIsRecording(true);
+      console.log("Recording started...");
+    } catch (error) {
+      console.error("Error accessing microphone:", error);
+      alert("Microphone access denied. Please allow microphone access to use voice input.");
     }
   };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      console.log("Stopping recording...");
+    }
+  };
+
+  const transcribeAudio = async (audioBlob: Blob) => {
+    // Check if API key is configured
+    if (!API_KEY || API_KEY === "your_api_key_here") {
+      alert(
+        "AssemblyAI API key not configured!"
+      );
+      return;
+    }
+
+    setIsTranscribing(true);
+
+    try {
+      console.log("Initializing AssemblyAI client...");
+      const client = new AssemblyAI({
+        apiKey: API_KEY,
+      });
+
+      console.log("Uploading audio file...");
+      const uploadUrl = await client.files.upload(audioBlob);
+      console.log("Audio uploaded:", uploadUrl);
+
+      console.log("Starting transcription...");
+      const transcript = await client.transcripts.transcribe({
+        audio_url: uploadUrl,
+      });
+
+      if (transcript.status === "error") {
+        console.error("Transcription error:", transcript.error);
+        alert("Transcription failed. Please try again.");
+        setIsTranscribing(false);
+        return;
+      }
+
+      console.log("Transcription completed:", transcript.text);
+
+      if (transcript.text) {
+        onTranscript(transcript.text);
+      } else {
+        alert("No speech detected. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error during transcription:", error);
+      alert(
+        "Transcription failed. Please check:\n" +
+        "• Your API key is valid\n" +
+        "• You have internet connection\n" 
+      );
+    } finally {
+      setIsTranscribing(false);
+    }
+  };
+
+  const toggleRecording = () => {
+    if (isRecording) {
+      stopRecording();
+    } else {
+      startRecording();
+    }
+  };
+
+  const isActive = isRecording || isTranscribing;
 
   return (
     <Button
       variant="ghost"
       size="icon"
       className={`relative h-10 w-10 z-10 transition-all duration-300 ${
-        isListening ? "text-destructive" : "text-foreground"
-      } ${!isSupported ? "opacity-50 cursor-not-allowed" : ""}`}
-      onClick={toggleListening}
-      disabled={disabled}
+        isActive ? "text-destructive" : "text-foreground"
+      }`}
+      onClick={toggleRecording}
+      disabled={disabled || isTranscribing}
       title={
-        !isSupported
-          ? "Voice input not supported in this browser"
-          : isListening
+        isTranscribing
+          ? "Transcribing..."
+          : isRecording
           ? "Stop recording"
           : "Start voice input"
       }
     >
-      {/* Animated pulse rings when listening */}
-      {isListening && (
+      {/* Animated pulse rings when recording */}
+      {isRecording && (
         <>
           <span className="absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75 animate-ping"></span>
           <span className="absolute inline-flex h-full w-full rounded-full bg-destructive opacity-50 animate-pulse"></span>
         </>
       )}
 
-      {/* Mic icon */}
+      {/* Mic icon or loading spinner */}
       <div className="relative z-10">
-        {isListening ? (
-          <MicOff className="w-6 h-6 animate-pulse" />
+        {isTranscribing ? (
+          <Loader2 className="w-8 h-8 animate-spin" />
+        ) : isRecording ? (
+          <MicOff className="w-8 h-8 animate-pulse" />
         ) : (
-          <Mic className="w-6 h-6" />
+          <Mic className="w-8 h-8" />
         )}
       </div>
 
       {/* Recording indicator dot */}
-      {isListening && (
+      {isRecording && (
         <span className="absolute -top-1 -right-1 flex h-3 w-3">
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75"></span>
-          <span className="relative inline-flex rounded-full h-3 w-3 bg-destructive"></span>
+          <span className="relative inline-flex rounded-full h-30 w-3 bg-destructive"></span>
         </span>
       )}
     </Button>
