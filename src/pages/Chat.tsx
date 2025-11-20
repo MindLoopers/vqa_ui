@@ -6,6 +6,7 @@ import { globalState, ChatMessage } from "@/lib/globalState";
 import { sendMultimodalQuery } from "@/lib/api";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import VoiceInput from "@/components/VoiceInput";
 
 const Chat = () => {
   const [chatHistories, setChatHistories] = useState(
@@ -138,6 +139,15 @@ const Chat = () => {
     // Remove the attachment
     newAttachments.splice(index, 1);
     setAttachments(newAttachments);
+  };
+
+  const handleVoiceTranscript = (transcript: string) => {
+    // Append voice transcript to existing message or replace if empty
+    if (message.trim()) {
+      setMessage(message + " " + transcript);
+    } else {
+      setMessage(transcript);
+    }
   };
 
   const handleSendMessage = async () => {
@@ -432,7 +442,7 @@ const Chat = () => {
                 </Button>
                 <textarea
                   placeholder="Ask about wildfire analysis..."
-                  className="flex-1 pl-14 pr-14 h-14 text-lg w-full resize-none border rounded-md py-4 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent "
+                  className="flex-1 pl-14 pr-28 h-14 text-lg w-full resize-none border rounded-md py-4 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent "
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   onKeyDown={(e) => {
@@ -447,6 +457,12 @@ const Chat = () => {
                     overflow: "hidden",
                   }}
                 />
+                <div className="absolute right-14 h-10 w-10">
+                  <VoiceInput
+                    onTranscript={handleVoiceTranscript}
+                    disabled={loading}
+                  />
+                </div>
                 <Button
                   size="icon"
                   className="absolute right-2 bg-primary hover:bg-primary/90 h-10 w-10"
