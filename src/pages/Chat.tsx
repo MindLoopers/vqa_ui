@@ -23,6 +23,18 @@ const Chat = () => {
     }[]
   >([]);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Auto-resize textarea based on content
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "64px"; // Reset to min height
+      const scrollHeight = textareaRef.current.scrollHeight;
+      const maxHeight = 200; // Maximum height in pixels
+      textareaRef.current.style.height = `${Math.min(scrollHeight, maxHeight)}px`;
+      textareaRef.current.style.overflow = scrollHeight > maxHeight ? "auto" : "hidden";
+    }
+  }, [message]);
 
   // Scroll to bottom whenever messages change
   useEffect(() => {
@@ -431,16 +443,17 @@ const Chat = () => {
                 paddingBottom: "1.5rem",
               }}
             >
-              <div className="relative flex items-center">
+              <div className="relative flex items-end">
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="absolute left-2 h-10 w-10 z-10"
+                  className="absolute left-2 bottom-2 h-10 w-10 z-10"
                   onClick={handleAttachFile}
                 >
                   <Paperclip className="w-6 h-6" />
                 </Button>
                 <textarea
+                  ref={textareaRef}
                   placeholder="Ask about wildfire analysis..."
                   className="flex-1 pl-14 pr-28 h-14 text-lg w-full resize-none border rounded-md py-4 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent "
                   value={message}
@@ -453,11 +466,10 @@ const Chat = () => {
                   }}
                   style={{
                     minHeight: "64px",
-                    maxHeight: "120px",
-                    overflow: "hidden",
+                    height: "64px",
                   }}
                 />
-                <div className="absolute right-14 h-10 w-10">
+                <div className="absolute right-14 bottom-2 h-10 w-10">
                   <VoiceInput
                     onTranscript={handleVoiceTranscript}
                     disabled={loading}
@@ -465,7 +477,7 @@ const Chat = () => {
                 </div>
                 <Button
                   size="icon"
-                  className="absolute right-2 bg-primary hover:bg-primary/90 h-10 w-10"
+                  className="absolute right-2 bottom-2 bg-primary hover:bg-primary/90 h-10 w-10"
                   onClick={handleSendMessage}
                   disabled={
                     loading || (!message.trim() && attachments.length === 0)
