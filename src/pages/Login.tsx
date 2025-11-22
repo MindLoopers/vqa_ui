@@ -9,7 +9,7 @@ const Login = () => {
 
   const handleLogin = (username: string, password: string) => {
     // Simple authentication for prototype
-    if (username === "admin" && password === "admin") {
+    if (username === "mindloop" && password === "admin") {
       localStorage.setItem("isAuthenticated", "true");
       localStorage.setItem("user", username);
       navigate("/");
