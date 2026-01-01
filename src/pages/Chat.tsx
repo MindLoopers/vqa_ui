@@ -67,6 +67,7 @@ const Chat = () => {
             )}
             
             <CenteredChatInput
+              key={activeChatId}
               message={message}
               onMessageChange={setMessage}
               onSend={handleSendMessage}
@@ -123,6 +124,7 @@ const Chat = () => {
             />
 
             <ChatInput
+              key={activeChatId}
               message={message}
               onMessageChange={setMessage}
               onSend={handleSendMessage}
