@@ -1,13 +1,27 @@
-import React from "react";
+import React, { useState } from "react";
 import { ChatMessage as ChatMessageType } from "@/lib/globalState";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { Copy, Check } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface ChatMessageProps {
   message: ChatMessageType;
 }
 
 const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(message.content);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy text:", err);
+    }
+  };
+
   return (
     <div
       className={`flex ${
@@ -69,11 +83,30 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
             </div>
           )}
         </div>
-        <div className="text-xs mt-1 opacity-70">
-          {new Date(message.timestamp).toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          })}
+        <div className="flex items-center justify-between mt-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            className={`h-6 w-6 opacity-70 hover:opacity-100 ${
+              message.role === "user"
+                ? "hover:bg-[#8FA4E8]"
+                : "hover:bg-[#E5E7EB]"
+            }`}
+            onClick={handleCopy}
+            title="Copy message"
+          >
+            {copied ? (
+              <Check className="h-3 w-3 text-green-600" />
+            ) : (
+              <Copy className="h-3 w-3" />
+            )}
+          </Button>
+          <div className="text-xs opacity-70">
+            {new Date(message.timestamp).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </div>
         </div>
       </div>
     </div>

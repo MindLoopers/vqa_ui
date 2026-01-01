@@ -52,6 +52,17 @@ class GlobalState {
   getChatById(id: string) {
     return this.chatHistories.find(chat => chat.id === id);
   }
+
+  renameChatHistory(id: string, newTitle: string) {
+    const chat = this.getChatById(id);
+    if (chat) {
+      chat.title = newTitle;
+    }
+  }
+
+  deleteChatHistory(id: string) {
+    this.chatHistories = this.chatHistories.filter(chat => chat.id !== id);
+  }
 }
 
 export const globalState = new GlobalState();

@@ -62,6 +62,22 @@ export const useChat = () => {
     globalState.setActiveChatId(id);
   };
 
+  const handleRenameChat = (id: string, newTitle: string) => {
+    globalState.renameChatHistory(id, newTitle);
+    setChatHistories([...globalState.getChatHistories()]);
+  };
+
+  const handleDeleteChat = (id: string) => {
+    globalState.deleteChatHistory(id);
+    setChatHistories([...globalState.getChatHistories()]);
+    
+    // If the deleted chat was active, clear the active chat
+    if (activeChatId === id) {
+      setActiveChatId(null);
+      globalState.setActiveChatId(null);
+    }
+  };
+
   const handleAttachFile = () => {
     if (fileInputRef.current) {
       fileInputRef.current.click();
@@ -232,6 +248,8 @@ export const useChat = () => {
     // Handlers
     handleNewChat,
     handleChatSelect,
+    handleRenameChat,
+    handleDeleteChat,
     handleAttachFile,
     handleFileChange,
     clearAttachments,

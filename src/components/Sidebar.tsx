@@ -19,6 +19,8 @@ interface SidebarProps {
   activeChatId?: string | null;
   onChatSelect?: (id: string) => void;
   onNewChat?: () => void;
+  onRenameChat?: (id: string, newTitle: string) => void;
+  onDeleteChat?: (id: string) => void;
   showAnalyticsMetrics?: boolean;
 }
 
@@ -27,6 +29,8 @@ const Sidebar = ({
   activeChatId,
   onChatSelect,
   onNewChat,
+  onRenameChat,
+  onDeleteChat,
   showAnalyticsMetrics = false,
 }: SidebarProps) => {
   const navigate = useNavigate();
@@ -112,6 +116,8 @@ const Sidebar = ({
                 chatHistories={chatHistories}
                 activeChatId={activeChatId}
                 onChatSelect={onChatSelect || (() => {})}
+                onRenameChat={onRenameChat}
+                onDeleteChat={onDeleteChat}
               />
             </div>
           </>

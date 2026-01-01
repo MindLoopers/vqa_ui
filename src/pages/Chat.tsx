@@ -19,6 +19,8 @@ const Chat = () => {
     setMessage,
     handleNewChat,
     handleChatSelect,
+    handleRenameChat,
+    handleDeleteChat,
     handleAttachFile,
     handleFileChange,
     clearAttachments,
@@ -34,6 +36,8 @@ const Chat = () => {
         activeChatId={activeChatId}
         onChatSelect={handleChatSelect}
         onNewChat={handleNewChat}
+        onRenameChat={handleRenameChat}
+        onDeleteChat={handleDeleteChat}
       />
 
       <div className="flex-1 flex flex-col items-center justify-center pt-4">
