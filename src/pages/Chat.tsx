@@ -14,7 +14,7 @@ const Chat = () => {
   );
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
   const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loadingChats, setLoadingChats] = useState<Set<string>>(new Set());
   const [attachments, setAttachments] = useState<
     {
       type: "image";
@@ -210,7 +210,11 @@ const Chat = () => {
       setChatHistories([...globalState.getChatHistories()]);
 
       // Call the API
-      setLoading(true);
+      setLoadingChats(prev => {
+        const newSet = new Set(prev);
+        newSet.add(activeChatId);
+        return newSet;
+      });
       try {
         // Call the multimodal API
         const response = await sendMultimodalQuery(message, imageFiles);
@@ -237,7 +241,11 @@ const Chat = () => {
         currentChat.messages.push(errorMessage);
         setChatHistories([...globalState.getChatHistories()]);
       } finally {
-        setLoading(false);
+        setLoadingChats(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(activeChatId);
+          return newSet;
+        });
         // Scroll to bottom after message is sent with a longer delay to ensure content is rendered
         setTimeout(() => {
           if (chatContainerRef.current) {
@@ -310,10 +318,10 @@ const Chat = () => {
                       }`}
                     >
                       <div
-                        className={`max-w-[80%] rounded-lg p-4 text-medium break-words whitespace-normal overflow-wrap-break-word ${
+                        className={`rounded-lg p-4 text-medium break-words whitespace-normal overflow-wrap-break-word ${
                           msg.role === "user"
-                            ? "bg-[#A7BAF7] text-black ml-auto rounded-br-none"
-                            : "bg-[#F3F4F6] text-black rounded-bl-none"
+                            ? "bg-[#A7BAF7] text-black ml-auto rounded-br-none max-w-[60%]"
+                            : "bg-[#F3F4F6] text-black rounded-bl-none w-full"
                         }`}
                         style={{
                           overflowWrap: "break-word",
@@ -373,9 +381,9 @@ const Chat = () => {
                       </div>
                     </div>
                   ))}
-                {loading && (
+                {activeChatId && loadingChats.has(activeChatId) && (
                   <div className="flex justify-start">
-                    <div className="max-w-[80%] rounded-lg p-4 bg-muted rounded-bl-none">
+                    <div className="w-full rounded-lg p-4 bg-muted rounded-bl-none">
                       <div className="flex items-center space-x-3">
                         <div className="relative w-10 h-10">
                           <div className="absolute inset-0 rounded-full border-t-2 border-r-2 border-primary animate-spin"></div>
@@ -472,7 +480,7 @@ const Chat = () => {
                 <div className="absolute right-14 bottom-2 h-10 w-10">
                   <VoiceInput
                     onTranscript={handleVoiceTranscript}
-                    disabled={loading}
+                    disabled={activeChatId ? loadingChats.has(activeChatId) : false}
                   />
                 </div>
                 <Button
@@ -480,7 +488,7 @@ const Chat = () => {
                   className="absolute right-2 bottom-2 bg-primary hover:bg-primary/90 h-10 w-10"
                   onClick={handleSendMessage}
                   disabled={
-                    loading || (!message.trim() && attachments.length === 0)
+                    (activeChatId ? loadingChats.has(activeChatId) : false) || (!message.trim() && attachments.length === 0)
                   }
                 >
                   <Send className="w-4 h-4" />

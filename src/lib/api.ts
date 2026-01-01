@@ -5,9 +5,9 @@
  */
 export interface MultimodalQueryResponse {
   response: string;
-  confidence?: number;
-  metadata?: Record<string, unknown>;
-  context?: Record<string, unknown>[];
+  request_id: string;
+  token_usage?: Record<string, unknown>;
+  agent: string;
 }
  
 /** 
@@ -39,7 +39,7 @@ export const sendMultimodalQuery = async (prompt: string, images: File[]): Promi
     }
     
     // Send request to the backend
-    const response = await fetch('http://localhost:8070/rag/multimodal', {
+    const response = await fetch('http://10.8.100.27:8010/api/orchestrator-agent', {
       method: 'POST',
       headers: {
         'accept': 'application/json',

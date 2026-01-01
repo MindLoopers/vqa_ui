@@ -12,6 +12,7 @@ const Login = () => {
     if (username === "mindloop" && password === "admin") {
       localStorage.setItem("isAuthenticated", "true");
       localStorage.setItem("user", username);
+      localStorage.setItem("loginTime", Date.now().toString());
       navigate("/");
       return true;
     } else {
