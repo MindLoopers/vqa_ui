@@ -39,7 +39,7 @@ export const sendMultimodalQuery = async (prompt: string, images: File[]): Promi
     }
     
     // Send request to the backend
-    const response = await fetch('http://10.8.100.27:8010/api/orchestrator-agent', {
+    const response = await fetch('https://gluelike-proximally-ginny.ngrok-free.dev/api/orchestrator-agent', {
       method: 'POST',
       headers: {
         'accept': 'application/json',
