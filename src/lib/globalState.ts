@@ -45,6 +45,10 @@ class GlobalState {
     return this.chatHistories;
   }
 
+  setChatHistories(chats: ChatHistory[]) {
+    this.chatHistories = chats;
+  }
+
   addChatHistory(chat: ChatHistory) {
     this.chatHistories.unshift(chat);
   }

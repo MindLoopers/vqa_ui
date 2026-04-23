@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
-import { globalState, ChatMessage } from "@/lib/globalState";
-import { sendMultimodalQuery } from "@/lib/api";
+import { globalState, ChatMessage, ChatHistory } from "@/lib/globalState";
+import { sendMultimodalQuery, getChats, getChatMessages } from "@/lib/api";
 
 interface Attachment {
   type: "image";
@@ -9,7 +9,7 @@ interface Attachment {
 }
 
 export const useChat = () => {
-  const [chatHistories, setChatHistories] = useState(
+  const [chatHistories, setChatHistories] = useState<ChatHistory[]>(
     globalState.getChatHistories()
   );
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
@@ -18,6 +18,38 @@ export const useChat = () => {
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Load chats on initial mount
+  useEffect(() => {
+    const loadChats = async () => {
+      try {
+        const backendChats = await getChats();
+        const formattedChats: ChatHistory[] = backendChats.map((c) => ({
+          id: c.id,
+          title: c.title,
+          date: new Date(c.created_at).toLocaleDateString(),
+          messages: [], // Initially empty, load on demand
+        }));
+        
+        // Merge with any existing local un-synced chats if needed, or just replace
+        globalState.setChatHistories(formattedChats);
+        setChatHistories(formattedChats);
+        
+        if (formattedChats.length > 0 && !activeChatId) {
+          handleChatSelect(formattedChats[0].id);
+        } else if (formattedChats.length === 0 && !activeChatId) {
+          handleNewChat();
+        }
+      } catch (error) {
+        console.error("Failed to load chats:", error);
+      }
+    };
+    
+    // Only load if authenticated
+    if (localStorage.getItem("isAuthenticated") === "true") {
+      loadChats();
+    }
+  }, []);
 
   // Scroll to bottom whenever messages change
   useEffect(() => {
@@ -46,20 +78,74 @@ export const useChat = () => {
       globalState.setActiveChatId(existingEmptyChat.id);
     } else {
       const newChat = {
-        id: Date.now().toString(),
+        id: Date.now().toString(), // local ID until synced
         title: "New chat",
         date: new Date().toLocaleDateString(),
         messages: [],
       };
       globalState.addChatHistory(newChat);
-      setChatHistories(globalState.getChatHistories());
+      setChatHistories([...globalState.getChatHistories()]);
       setActiveChatId(newChat.id);
+      globalState.setActiveChatId(newChat.id);
+    }
+  };
+
+  const loadMessagesForChat = async (chatId: string) => {
+    // Only fetch if it's a valid backend MongoID (24 chars)
+    if (!/^[0-9a-fA-F]{24}$/.test(chatId)) return;
+
+    const chat = globalState.getChatById(chatId);
+    if (chat && chat.messages.length === 0) {
+      setLoadingChats(prev => new Set(prev).add(chatId));
+      try {
+        const backendMessages = await getChatMessages(chatId);
+        const formattedMessages: ChatMessage[] = [];
+        
+        backendMessages.forEach((msg) => {
+          // Add user prompt
+          if (msg.prompt) {
+            formattedMessages.push({
+              id: `${msg.id}-user`,
+              role: "user",
+              content: msg.prompt,
+              timestamp: new Date(msg.created_at),
+              attachments: msg.attachments?.map((a) => ({
+                type: a.type as any || "image",
+                url: a.url || "",
+                name: a.name || "",
+              })) || [],
+            });
+          }
+          
+          // Add assistant response
+          if (msg.response) {
+            formattedMessages.push({
+              id: `${msg.id}-assistant`,
+              role: "assistant",
+              content: msg.response,
+              timestamp: new Date(msg.created_at),
+            });
+          }
+        });
+        
+        chat.messages = formattedMessages;
+        setChatHistories([...globalState.getChatHistories()]);
+      } catch (error) {
+        console.error(`Failed to load messages for chat ${chatId}:`, error);
+      } finally {
+        setLoadingChats(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(chatId);
+          return newSet;
+        });
+      }
     }
   };
 
   const handleChatSelect = (id: string) => {
     setActiveChatId(id);
     globalState.setActiveChatId(id);
+    loadMessagesForChat(id);
   };
 
   const handleRenameChat = (id: string, newTitle: string) => {
@@ -153,7 +239,6 @@ export const useChat = () => {
       timestamp: new Date(),
       attachments: attachments.map((attachment) => {
         const persistentUrl = attachment.previewUrl;
-        console.log("Adding attachment with URL:", persistentUrl);
         return {
           type: attachment.type,
           url: persistentUrl,
@@ -189,22 +274,21 @@ export const useChat = () => {
       });
 
       try {
-        const response = await sendMultimodalQuery(message, imageFiles);
-
-        console.log("API Response:", response);
-        console.log("Response content:", response.response);
-        console.log("Request ID:", response.request_id);
-        console.log("Token usage:", response.token_usage);
-        console.log("Agent:", response.agent);
+        const response = await sendMultimodalQuery(message, imageFiles, activeChatId);
 
         const assistantMessage: ChatMessage = {
-          id: (Date.now() + 1).toString(),
+          id: response.request_id || (Date.now() + 1).toString(),
           role: "assistant",
           content: response.response || "No response content",
           timestamp: new Date(),
         };
 
         currentChat.messages.push(assistantMessage);
+        
+        // If it was a new chat, the backend created it and returned an ID.
+        // We'd ideally need to update our frontend ID to match the backend ID.
+        // However, we handle this transparently using chatMap in api.ts for now.
+        
         setChatHistories([...globalState.getChatHistories()]);
       } catch (error) {
         console.error("API Error:", error);

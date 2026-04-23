@@ -5,7 +5,7 @@ import MobileHeader from "@/components/login/MobileHeader";
 import { useAuth } from "@/hooks/useAuth";
 
 const Login = () => {
-  const { error, handleLogin } = useAuth();
+  const { error, handleLogin, handleRegister } = useAuth();
 
   return (
     <div className="h-screen flex overflow-hidden">
@@ -20,14 +20,14 @@ const Login = () => {
           <div className="space-y-6">
             <div>
               <h2 className="text-3xl font-bold text-foreground mb-2">
-                Welcome Back
+                Welcome
               </h2>
               <p className="text-muted-foreground">
-                Sign in to access the wildfire emergency response system
+                Sign in or create an account to access the wildfire emergency response system
               </p>
             </div>
 
-            <LoginForm onLogin={handleLogin} error={error} />
+            <LoginForm onLogin={handleLogin} onRegister={handleRegister} error={error} />
           </div>
         </div>
       </div>

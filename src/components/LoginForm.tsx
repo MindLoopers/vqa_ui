@@ -2,15 +2,18 @@ import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { User, Lock, Eye, EyeOff, AlertCircle } from "lucide-react";
+import { User, Lock, Mail, Eye, EyeOff, AlertCircle } from "lucide-react";
 
 interface LoginFormProps {
-  onLogin: (username: string, password: string) => boolean;
+  onLogin: (email: string, password: string) => Promise<boolean>;
+  onRegister: (username: string, email: string, password: string) => Promise<boolean>;
   error: string;
 }
 
-const LoginForm: React.FC<LoginFormProps> = ({ onLogin, error }) => {
+const LoginForm: React.FC<LoginFormProps> = ({ onLogin, onRegister, error }) => {
+  const [isRegister, setIsRegister] = useState(false);
   const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -19,31 +22,58 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, error }) => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulate a slight delay for better UX
-    setTimeout(() => {
-      onLogin(username, password);
+    let success = false;
+    if (isRegister) {
+      success = await onRegister(username, email, password);
+    } else {
+      success = await onLogin(email, password);
+    }
+    
+    if (!success) {
       setIsLoading(false);
-    }, 500);
+    }
   };
 
   return (
     <div>
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-        {/* Username field */}
+        {/* Username field (only for register) */}
+        {isRegister && (
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="username" className="text-sm font-semibold text-foreground">
+              Username
+            </Label>
+            <div className="relative">
+              <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" />
+              <Input
+                type="text"
+                id="username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Enter your username"
+                required={isRegister}
+                autoComplete="username"
+                className="pl-12 h-12 bg-secondary/50 border-2 focus:bg-background transition-colors"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Email field */}
         <div className="flex flex-col gap-2">
-          <Label htmlFor="username" className="text-sm font-semibold text-foreground">
-            Username
+          <Label htmlFor="email" className="text-sm font-semibold text-foreground">
+            Email
           </Label>
           <div className="relative">
-            <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" />
+            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" />
             <Input
-              type="text"
-              id="username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Enter your username"
+              type="email"
+              id="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email"
               required
-              autoComplete="username"
+              autoComplete="email"
               className="pl-12 h-12 bg-secondary/50 border-2 focus:bg-background transition-colors"
             />
           </div>
@@ -63,7 +93,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, error }) => {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter your password"
               required
-              autoComplete="current-password"
+              autoComplete={isRegister ? "new-password" : "current-password"}
               className="pl-12 pr-12 h-12 bg-secondary/50 border-2 focus:bg-background transition-colors"
             />
             <button
@@ -95,9 +125,22 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, error }) => {
           disabled={isLoading}
           className="w-full h-12 text-base font-semibold bg-primary hover:bg-primary/90 transition-all shadow-md hover:shadow-lg"
         >
-          {isLoading ? "Signing in..." : "Sign In"}
+          {isLoading ? "Processing..." : isRegister ? "Create Account" : "Sign In"}
         </Button>
       </form>
+
+      <div className="mt-6 text-center">
+        <p className="text-sm text-muted-foreground">
+          {isRegister ? "Already have an account?" : "Don't have an account?"}{" "}
+          <button
+            type="button"
+            onClick={() => setIsRegister(!isRegister)}
+            className="font-semibold text-primary hover:underline transition-all"
+          >
+            {isRegister ? "Sign In" : "Create Account"}
+          </button>
+        </p>
+      </div>
     </div>
   );
 };
