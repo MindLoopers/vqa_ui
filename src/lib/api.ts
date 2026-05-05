@@ -277,4 +277,23 @@ export const deleteChat = async (chatId: string): Promise<void> => {
   if (!response.ok) {
     throw new Error(`Failed to delete chat ${chatId}: ${response.status}`);
   }
-};
+};
+
+/**
+ * Rename a chat
+ */
+export const renameChat = async (chatId: string, title: string): Promise<void> => {
+  const response = await fetch(`${API_BASE_URL}/chats/${chatId}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      'accept': 'application/json',
+    },
+    credentials: 'include',
+    body: JSON.stringify({ title }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to rename chat ${chatId}: ${response.status}`);
+  }
+};

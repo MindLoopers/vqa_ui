@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { globalState, ChatMessage, ChatHistory } from "@/lib/globalState";
-import { sendMultimodalQuery, getChats, getChatMessages, deleteChat } from "@/lib/api";
+import { sendMultimodalQuery, getChats, getChatMessages, deleteChat, renameChat } from "@/lib/api";
 
 interface Attachment {
   type: "image";
@@ -148,7 +148,16 @@ export const useChat = () => {
     loadMessagesForChat(id);
   };
 
-  const handleRenameChat = (id: string, newTitle: string) => {
+  const handleRenameChat = async (id: string, newTitle: string) => {
+    // Rename on backend if it's a valid MongoDB ID
+    if (/^[0-9a-fA-F]{24}$/.test(id)) {
+      try {
+        await renameChat(id, newTitle);
+      } catch (error) {
+        console.error("Failed to rename chat on backend:", error);
+      }
+    }
+
     globalState.renameChatHistory(id, newTitle);
     setChatHistories([...globalState.getChatHistories()]);
   };
