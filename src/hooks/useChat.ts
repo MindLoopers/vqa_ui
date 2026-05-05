@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { globalState, ChatMessage, ChatHistory } from "@/lib/globalState";
-import { sendMultimodalQuery, getChats, getChatMessages } from "@/lib/api";
+import { sendMultimodalQuery, getChats, getChatMessages, deleteChat } from "@/lib/api";
 
 interface Attachment {
   type: "image";
@@ -153,7 +153,18 @@ export const useChat = () => {
     setChatHistories([...globalState.getChatHistories()]);
   };
 
-  const handleDeleteChat = (id: string) => {
+  const handleDeleteChat = async (id: string) => {
+    // Delete from backend if it's a valid MongoDB ID
+    if (/^[0-9a-fA-F]{24}$/.test(id)) {
+      try {
+        await deleteChat(id);
+      } catch (error) {
+        console.error("Failed to delete chat from backend:", error);
+        // We could show a toast here, but for now we'll just log and proceed
+        // with local deletion so the UI updates anyway
+      }
+    }
+
     globalState.deleteChatHistory(id);
     setChatHistories([...globalState.getChatHistories()]);
     

@@ -188,7 +188,15 @@ export const loginUser = async (email: string, password: string) => {
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.detail || `Login failed: ${response.status}`);
+    let errorMessage = `Login failed: ${response.status}`;
+    if (errorData.detail) {
+      errorMessage = typeof errorData.detail === 'string'
+        ? errorData.detail
+        : Array.isArray(errorData.detail)
+          ? errorData.detail.map((e: any) => e.msg).join(", ")
+          : JSON.stringify(errorData.detail);
+    }
+    throw new Error(errorMessage);
   }
 
   return await response.json();
@@ -210,7 +218,15 @@ export const registerUser = async (username: string, email: string, password: st
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.detail || `Registration failed: ${response.status}`);
+    let errorMessage = `Registration failed: ${response.status}`;
+    if (errorData.detail) {
+      errorMessage = typeof errorData.detail === 'string'
+        ? errorData.detail
+        : Array.isArray(errorData.detail)
+          ? errorData.detail.map((e: any) => e.msg).join(", ")
+          : JSON.stringify(errorData.detail);
+    }
+    throw new Error(errorMessage);
   }
 
   return await response.json();
@@ -248,3 +264,17 @@ export const getCurrentUser = async () => {
 
   return await response.json();
 };
+
+/**
+ * Delete a chat
+ */
+export const deleteChat = async (chatId: string): Promise<void> => {
+  const response = await fetch(`${API_BASE_URL}/chats/${chatId}`, {
+    method: 'DELETE',
+    credentials: 'include',
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to delete chat ${chatId}: ${response.status}`);
+  }
+};
