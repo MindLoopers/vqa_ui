@@ -30,8 +30,10 @@ const Chat = () => {
     handleSendMessage,
   } = useChat();
 
+  const activeChat = chatHistories.find((c) => c.id === activeChatId);
+
   return (
-    <div className="flex h-screen bg-white overflow-x-hidden">
+    <div className="flex h-screen bg-background overflow-x-hidden">
       <Sidebar
         chatHistories={chatHistories}
         activeChatId={activeChatId}
@@ -41,11 +43,12 @@ const Chat = () => {
         onDeleteChat={handleDeleteChat}
       />
 
-      <div className="flex-1 flex flex-col items-center justify-center pt-4">
+      <div className="flex-1 flex flex-col items-center justify-center min-w-0">
         {!activeChatId ? (
+          /* No chat selected */
           <EmptyState onNewChat={handleNewChat} />
-        ) : chatHistories.find((c) => c.id === activeChatId)?.messages.length === 0 ? (
-          /* Show centered input for new chats with no messages */
+        ) : activeChat?.messages.length === 0 ? (
+          /* New chat — centered input */
           <>
             <input
               type="file"
@@ -55,9 +58,9 @@ const Chat = () => {
               onChange={handleFileChange}
               multiple
             />
-            
+
             {attachments.length > 0 && (
-              <div className="absolute top-20 left-1/2 transform -translate-x-1/2 z-10">
+              <div className="w-full max-w-2xl px-8 mb-4">
                 <AttachmentsPreview
                   attachments={attachments}
                   onClearAll={clearAttachments}
@@ -65,7 +68,7 @@ const Chat = () => {
                 />
               </div>
             )}
-            
+
             <CenteredChatInput
               key={activeChatId}
               message={message}
@@ -73,38 +76,32 @@ const Chat = () => {
               onSend={handleSendMessage}
               onAttachFile={handleAttachFile}
               onVoiceTranscript={handleVoiceTranscript}
-              disabled={activeChatId ? loadingChats.has(activeChatId) : false}
+              disabled={loadingChats.has(activeChatId)}
               hasAttachments={attachments.length > 0}
             />
           </>
         ) : (
-          /* Regular layout for chats with messages */
-          <div className="w-full flex flex-col h-full">
-            <div className="flex items-center justify-between p-4 border-b border-border">
-              <h2 className="text-lg font-semibold text-foreground pl-40">
-                {chatHistories.find((c) => c.id === activeChatId)?.title}
-              </h2>
+          /* Active chat with messages */
+          <div className="w-full flex flex-col h-full min-w-0">
+            {/* Chat header */}
+            <div className="border-b border-border bg-card shrink-0">
+              <div className="max-w-4xl mx-auto px-6 py-3">
+                <h2 className="text-base font-semibold text-foreground truncate">
+                  {activeChat?.title}
+                </h2>
+              </div>
             </div>
 
+            {/* Messages area */}
             <div
               className="flex-1 overflow-y-auto"
               ref={chatContainerRef}
-              style={{
-                paddingLeft: "10rem",
-                paddingRight: "10rem",
-                paddingTop: "1.5rem",
-                paddingBottom: "1.5rem",
-              }}
             >
-              <div className="space-y-4">
-                {chatHistories
-                  .find((c) => c.id === activeChatId)
-                  ?.messages.map((msg) => (
-                    <ChatMessage key={msg.id} message={msg} />
-                  ))}
-                {activeChatId && loadingChats.has(activeChatId) && (
-                  <LoadingIndicator />
-                )}
+              <div className="max-w-4xl mx-auto px-6 py-6 space-y-5">
+                {activeChat?.messages.map((msg) => (
+                  <ChatMessage key={msg.id} message={msg} />
+                ))}
+                {loadingChats.has(activeChatId) && <LoadingIndicator />}
               </div>
             </div>
 
@@ -130,7 +127,7 @@ const Chat = () => {
               onSend={handleSendMessage}
               onAttachFile={handleAttachFile}
               onVoiceTranscript={handleVoiceTranscript}
-              disabled={activeChatId ? loadingChats.has(activeChatId) : false}
+              disabled={loadingChats.has(activeChatId)}
               hasAttachments={attachments.length > 0}
             />
           </div>

@@ -24,17 +24,15 @@ const CenteredChatInput: React.FC<CenteredChatInputProps> = ({
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Auto-focus on mount
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.focus();
     }
   }, []);
 
-  // Auto-resize textarea based on content
   useEffect(() => {
     if (textareaRef.current) {
-      textareaRef.current.style.height = "64px";
+      textareaRef.current.style.height = "56px";
       const scrollHeight = textareaRef.current.scrollHeight;
       const maxHeight = 200;
       textareaRef.current.style.height = `${Math.min(scrollHeight, maxHeight)}px`;
@@ -53,52 +51,52 @@ const CenteredChatInput: React.FC<CenteredChatInputProps> = ({
 
   return (
     <div className="flex items-center justify-center h-full px-8 w-full max-w-6xl">
-      <div className="w-full max-w-3xl">
+      <div className="w-full max-w-2xl">
         <div className="mb-8 text-center">
-          <h2 className="text-3xl font-bold mb-2 text-foreground">
+          <h2 className="text-3xl font-bold mb-3 text-foreground tracking-tight">
             What can I help you with?
           </h2>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground text-base leading-relaxed">
             Ask questions about wildfire analysis, upload images, or analyze data
           </p>
         </div>
-        
-        <div className="relative flex items-end bg-card border border-border rounded-lg shadow-lg">
+
+        <div className="relative flex items-end bg-background border border-border rounded-2xl shadow-md transition-all focus-within:border-primary/50 focus-within:shadow-lg focus-within:shadow-primary/10">
           <Button
             variant="ghost"
             size="icon"
-            className="absolute left-2 bottom-2 h-10 w-10 z-10"
+            className="absolute left-2 bottom-2 h-10 w-10 z-10 text-muted-foreground hover:text-foreground"
             onClick={onAttachFile}
+            title="Attach image"
           >
-            <Paperclip className="w-6 h-6" />
+            <Paperclip className="w-5 h-5" />
           </Button>
           <textarea
             ref={textareaRef}
             placeholder="Ask about wildfire analysis..."
-            className="flex-1 pl-14 pr-28 h-16 text-lg w-full resize-none bg-transparent py-4 focus:outline-none"
+            className="flex-1 pl-14 pr-28 text-base w-full resize-none bg-transparent py-3.5 focus:outline-none text-foreground placeholder:text-muted-foreground"
             value={message}
             onChange={(e) => onMessageChange(e.target.value)}
             onKeyDown={handleKeyDown}
-            style={{
-              minHeight: "64px",
-              height: "64px",
-            }}
+            style={{ minHeight: "56px", height: "56px" }}
           />
           <div className="absolute right-14 bottom-2 h-10 w-10">
-            <VoiceInput
-              onTranscript={onVoiceTranscript}
-              disabled={disabled}
-            />
+            <VoiceInput onTranscript={onVoiceTranscript} disabled={disabled} />
           </div>
           <Button
             size="icon"
-            className="absolute right-2 bottom-2 bg-primary hover:bg-primary/90 h-10 w-10"
+            className="absolute right-2 bottom-2 bg-primary hover:bg-primary/90 h-10 w-10 rounded-xl shadow-sm transition-all"
             onClick={onSend}
             disabled={disabled || (!message.trim() && !hasAttachments)}
+            title="Send message"
           >
             <Send className="w-4 h-4" />
           </Button>
         </div>
+
+        <p className="text-xs text-muted-foreground text-center mt-3">
+          Press <kbd className="px-1 py-0.5 rounded bg-muted text-muted-foreground font-mono text-xs">Enter</kbd> to send &middot; <kbd className="px-1 py-0.5 rounded bg-muted text-muted-foreground font-mono text-xs">Shift+Enter</kbd> for new line
+        </p>
       </div>
     </div>
   );

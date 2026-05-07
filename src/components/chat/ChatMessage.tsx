@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { ChatMessage as ChatMessageType } from "@/lib/globalState";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Copy, Check } from "lucide-react";
+import { Copy, Check, User, Bot } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface ChatMessageProps {
@@ -22,91 +22,100 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
     }
   };
 
+  const isUser = message.role === "user";
+
   return (
-    <div
-      className={`flex ${
-        message.role === "user" ? "justify-end" : "justify-start"
-      }`}
-    >
-      <div
-        className={`rounded-lg p-4 text-medium break-words whitespace-normal overflow-wrap-break-word ${
-          message.role === "user"
-            ? "bg-[#A7BAF7] text-black ml-auto rounded-br-none max-w-[60%]"
-            : "bg-[#F3F4F6] text-black rounded-bl-none w-full"
-        }`}
-        style={{
-          overflowWrap: "break-word",
-          wordWrap: "break-word",
-          hyphens: "auto",
-        }}
-      >
-        {message.attachments && message.attachments.length > 0 && (
-          <div
-            className={`mb-2 grid ${
-              message.attachments.length > 1
-                ? "grid-cols-2"
-                : "grid-cols-1"
-            } gap-2 max-w-[300px]`}
-          >
-            {message.attachments.map((attachment, index) => (
-              <div
-                key={index}
-                className="border border-gray-200 rounded-md overflow-hidden"
-              >
-                {attachment.type === "image" && (
-                  <img
-                    src={attachment.url}
-                    alt={attachment.name || "Image attachment"}
-                    className="w-full max-h-[200px] object-contain rounded-md"
-                    style={{ maxWidth: "100%", height: "auto" }}
-                    onError={(e) => {
-                      console.error(
-                        "Image failed to load:",
-                        attachment.url
-                      );
-                      e.currentTarget.src = "/placeholder.svg";
-                    }}
-                  />
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-        <div className="text-lg">
-          {message.role === "user" ? (
-            message.content
+    <div className={`flex gap-3 ${isUser ? "flex-row-reverse" : "flex-row"}`}>
+      {/* Avatar */}
+      <div className="flex-shrink-0 mt-1">
+        <div
+          className={`w-8 h-8 rounded-full flex items-center justify-center shadow-sm ${
+            isUser ? "bg-[#1E40AF]" : "bg-[#475569]"
+          }`}
+        >
+          {isUser ? (
+            <User className="w-4 h-4 text-white" />
           ) : (
-            <div>
-              <Markdown remarkPlugins={[remarkGfm]}>
-                {message.content}
-              </Markdown>
-            </div>
+            <Bot className="w-4 h-4 text-white" />
           )}
         </div>
-        <div className="flex items-center justify-between mt-2">
+      </div>
+
+      {/* Message bubble + footer */}
+      <div
+        className={`flex flex-col gap-1 ${
+          isUser ? "items-end max-w-[70%]" : "items-start max-w-[80%]"
+        }`}
+      >
+        <div
+          className={`rounded-2xl px-4 py-3 break-words ${
+            isUser
+              ? "bg-[#A7BAF7] text-gray-900 rounded-tr-sm shadow-sm"
+              : "bg-white border border-[#E2E8F0] text-gray-800 rounded-tl-sm shadow-sm"
+          }`}
+          style={{ overflowWrap: "break-word", wordBreak: "break-word" }}
+        >
+          {message.attachments && message.attachments.length > 0 && (
+            <div
+              className={`mb-3 grid gap-2 ${
+                message.attachments.length > 1 ? "grid-cols-2" : "grid-cols-1"
+              }`}
+              style={{ maxWidth: "280px" }}
+            >
+              {message.attachments.map((attachment, index) => (
+                <div
+                  key={index}
+                  className="rounded-xl overflow-hidden border border-white/30"
+                >
+                  {attachment.type === "image" && (
+                    <img
+                      src={attachment.url}
+                      alt={attachment.name || "Image attachment"}
+                      className="w-full max-h-[200px] object-cover"
+                      onError={(e) => {
+                        e.currentTarget.src = "/placeholder.svg";
+                      }}
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="text-base leading-relaxed">
+            {isUser ? (
+              <span>{message.content}</span>
+            ) : (
+              <Markdown remarkPlugins={[remarkGfm]}>{message.content}</Markdown>
+            )}
+          </div>
+        </div>
+
+        {/* Timestamp + copy */}
+        <div
+          className={`flex items-center gap-1.5 px-1 ${
+            isUser ? "flex-row-reverse" : "flex-row"
+          }`}
+        >
+          <span className="text-xs text-gray-400">
+            {new Date(message.timestamp).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </span>
           <Button
             variant="ghost"
             size="icon"
-            className={`h-6 w-6 opacity-70 hover:opacity-100 ${
-              message.role === "user"
-                ? "hover:bg-[#8FA4E8]"
-                : "hover:bg-[#E5E7EB]"
-            }`}
+            className="h-5 w-5 opacity-40 hover:opacity-90 rounded transition-opacity"
             onClick={handleCopy}
             title="Copy message"
           >
             {copied ? (
               <Check className="h-3 w-3 text-green-600" />
             ) : (
-              <Copy className="h-3 w-3" />
+              <Copy className="h-3 w-3 text-gray-500" />
             )}
           </Button>
-          <div className="text-xs opacity-70">
-            {new Date(message.timestamp).toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
-          </div>
         </div>
       </div>
     </div>
