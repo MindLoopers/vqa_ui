@@ -252,19 +252,28 @@ export const useChat = () => {
   const handleSendMessage = async () => {
     if ((!message.trim() && attachments.length === 0) || !activeChatId) return;
 
+    // Convert blob URLs to data URLs so they survive after the attachment state clears
+    const persistedAttachments = await Promise.all(
+      attachments.map(
+        ({ type, file }) =>
+          new Promise<{ type: "image"; url: string; name: string }>(
+            (resolve, reject) => {
+              const reader = new FileReader();
+              reader.onload = () =>
+                resolve({ type, url: reader.result as string, name: file.name });
+              reader.onerror = reject;
+              reader.readAsDataURL(file);
+            }
+          )
+      )
+    );
+
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
       role: "user",
       content: message,
       timestamp: new Date(),
-      attachments: attachments.map((attachment) => {
-        const persistentUrl = attachment.previewUrl;
-        return {
-          type: attachment.type,
-          url: persistentUrl,
-          name: attachment.file.name,
-        };
-      }),
+      attachments: persistedAttachments,
     };
 
     const currentChat = globalState.getChatById(activeChatId);

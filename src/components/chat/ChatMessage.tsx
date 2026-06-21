@@ -23,6 +23,10 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
   };
 
   const isUser = message.role === "user";
+  const imageAttachments = (message.attachments ?? []).filter(
+    (a) => a.type === "image" && a.url
+  );
+  const hasImages = imageAttachments.length > 0;
 
   return (
     <div className={`flex gap-3 ${isUser ? "flex-row-reverse" : "flex-row"}`}>
@@ -44,51 +48,67 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
       {/* Message bubble + footer */}
       <div
         className={`flex flex-col gap-1 ${
-          isUser ? "items-end max-w-[70%]" : "items-start max-w-[80%]"
+          isUser
+            ? `items-end ${hasImages ? "max-w-[85%]" : "max-w-[70%]"}`
+            : "items-start max-w-[80%]"
         }`}
       >
         <div
-          className={`rounded-2xl px-4 py-3 break-words ${
+          className={`rounded-2xl break-words overflow-hidden ${
             isUser
               ? "bg-[#A7BAF7] text-gray-900 rounded-tr-sm shadow-sm"
               : "bg-white border border-[#E2E8F0] text-gray-800 rounded-tl-sm shadow-sm"
           }`}
           style={{ overflowWrap: "break-word", wordBreak: "break-word" }}
         >
-          {message.attachments && message.attachments.length > 0 && (
+          {/* Images — flush at the top, full bubble width */}
+          {hasImages && (
             <div
-              className={`mb-3 grid gap-2 ${
-                message.attachments.length > 1 ? "grid-cols-2" : "grid-cols-1"
-              }`}
-              style={{ maxWidth: "280px" }}
+              className={`overflow-hidden ${
+                isUser ? "rounded-t-2xl rounded-tr-sm" : "rounded-t-2xl rounded-tl-sm"
+              } ${message.content ? "mb-0" : ""}`}
             >
-              {message.attachments.map((attachment, index) => (
+              {imageAttachments.length === 1 ? (
+                <img
+                  src={imageAttachments[0].url}
+                  alt={imageAttachments[0].name || "Attached image"}
+                  className="w-full max-h-80 object-cover block"
+                />
+              ) : (
                 <div
-                  key={index}
-                  className="rounded-xl overflow-hidden border border-white/30"
+                  className={`grid gap-0.5 ${
+                    imageAttachments.length === 2
+                      ? "grid-cols-2"
+                      : imageAttachments.length === 3
+                      ? "grid-cols-3"
+                      : "grid-cols-2"
+                  }`}
                 >
-                  {attachment.type === "image" && (
+                  {imageAttachments.map((att, i) => (
                     <img
-                      src={attachment.url}
-                      alt={attachment.name || "Image attachment"}
-                      className="w-full max-h-[200px] object-cover"
-                      onError={(e) => {
-                        e.currentTarget.src = "/placeholder.svg";
-                      }}
+                      key={i}
+                      src={att.url}
+                      alt={att.name || `Image ${i + 1}`}
+                      className="w-full h-44 object-cover block"
                     />
-                  )}
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
           )}
 
-          <div className="text-base leading-relaxed">
-            {isUser ? (
-              <span>{message.content}</span>
-            ) : (
-              <Markdown remarkPlugins={[remarkGfm]}>{message.content}</Markdown>
-            )}
-          </div>
+          {/* Text content */}
+          {message.content && (
+            <div className="px-4 py-3">
+              {isUser ? (
+                <span className="text-base leading-relaxed">{message.content}</span>
+              ) : (
+                <div className="prose prose-sm max-w-none prose-gray prose-headings:text-gray-800 prose-p:text-gray-800 prose-li:text-gray-800 prose-strong:text-gray-900 prose-code:text-gray-800 prose-p:my-1 prose-headings:mt-3 prose-headings:mb-1 prose-ul:my-1 prose-ol:my-1 prose-li:my-0 text-base leading-relaxed">
+                  <Markdown remarkPlugins={[remarkGfm]}>{message.content}</Markdown>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Timestamp + copy */}
